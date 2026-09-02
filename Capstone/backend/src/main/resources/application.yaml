@@ -5,3 +5,5 @@ ktor:
     modules:
       - com.utahfoodbank.SerializationKt.configureSerialization
       - com.utahfoodbank.RoutingKt.configureRouting
+      - com.utahfoodbank.CorsKt.configureCors
+
