@@ -1,0 +1,13 @@
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# Gradle generated files
+.gradle/
+**/build/
+
+# macOS
+.DS_Store
+
+# Temporary backup of old backend
+Capstone/backend-old/

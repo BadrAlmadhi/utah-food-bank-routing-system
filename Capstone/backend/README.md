@@ -23,9 +23,9 @@ To build or run the project, use one of the following tasks:
 
 | Task | Description |
 |------|-------------|
-| `./kotlin test`    | Run the tests     |
-| `./kotlin build`   | Build the project |
-| `./kotlin run`     | Run the server    |
+| `./gradlew test`    | Run the tests     |
+| `./gradlew build`   | Build the project |
+| `./gradlew run`     | Run the server    |
 
 If the server starts successfully, you'll see the following output:
 ```
