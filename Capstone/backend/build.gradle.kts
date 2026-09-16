@@ -24,6 +24,11 @@ dependencies {
     implementation(libs.logback.classic)
     implementation(ktorLibs.server.cors)
 
+    // Database
+    implementation("org.ktorm:ktorm-core:4.2.0")
+    implementation("org.xerial:sqlite-jdbc:3.53.4.0")
+
+
     testImplementation(kotlin("test"))
     testImplementation(ktorLibs.server.testHost)
 }

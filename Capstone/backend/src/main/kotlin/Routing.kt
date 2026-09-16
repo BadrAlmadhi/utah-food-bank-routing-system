@@ -1,47 +1,85 @@
 package com.utahfoodbank
 
+import com.utahfoodbank.database.Clients
+import com.utahfoodbank.database.addClient
+import com.utahfoodbank.database.database
+import com.utahfoodbank.database.getClients
+import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import kotlinx.serialization.Serializable
+import io.ktor.server.request.*
+import com.utahfoodbank.model.Client
+import org.ktorm.dsl.insert
 
-@Serializable
-data class Client(
-    val clientId: Int,
-    val clientName: String,
-    val clientAddress: String,
-    val clientCity: String,
-    val clientZipCode: String
+
+
+val clients = mutableListOf<Client>(
+    Client(
+        clientId = 1,
+        clientName = "Ahmed",
+        clientAddress = "374 E Stonehedge DR",
+        clientCity = "Salt Lake",
+        clientZipCode = "84107"
+    ),
+    Client(
+        clientId = 2,
+        clientName = "Badr",
+        clientAddress = "3782 E Stonehedge",
+        clientCity = "Salt Lake",
+        clientZipCode = "84107"
+    )
 )
 
 fun Application.configureRouting() {
+
+
     routing {
         get("/") {
             call.respondText("Utah Food Bank Routing System")
         }
+
         get ("/clients") {
-            val clients = listOf(
-                Client(
-                    clientId = 1,
-                    clientName = "Badr",
-                    clientAddress = "374 E StoneHedge Dr",
-                    clientCity = "Salt lake",
-                    clientZipCode = "84107"
-                ),
-                Client(
-                    clientId = 2,
-                    clientName = "Charity London",
-                    clientAddress = "3166 E Stone Hedge",
-                    clientCity = "Salt lake",
-                    clientZipCode = "84107"
-                )
-            )
-
-
-            call.respond(clients)
+         call.respond(getClients())
         }
-        get("/json/kotlinx-serialization") {
-            call.respond(mapOf("hello" to "world"))
+
+        post("/clients") {
+            // kotlin objects
+            // react send new client to this
+            // then we add it to the client list
+            val client = call.receive<Client>()
+
+            // then add client
+            addClient(client)
+            call.respond(HttpStatusCode.Created)
+        }
+
+        delete("/clients/{clientId}") {
+
+            val clientId = call.parameters["clientId"]?.toIntOrNull()
+
+           if (clientId == null) {
+               call.respond(HttpStatusCode.BadRequest, "User id not found")
+           } else {
+               clients.removeIf { it.clientId == clientId }
+           }
+        }
+
+        put("/clients/{clientId}") {
+            val clientId = call.parameters["clientId"]?.toIntOrNull()
+            if (clientId == null) {
+                call.respond(HttpStatusCode.BadRequest, "User id not found")
+            } else {
+                val updateClient = call.receive<Client>()
+                val index = clients.indexOfFirst { it.clientId == clientId }
+
+                if (index >= 0) {
+                    clients[index] = updateClient.copy(clientId = clientId)
+                    call.respond(HttpStatusCode.OK,clients[index])
+                } else {
+                    call.respond(HttpStatusCode.NotFound, "User not found")
+                }
+            }
         }
     }
 }
