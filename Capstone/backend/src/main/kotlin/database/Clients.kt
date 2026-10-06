@@ -8,8 +8,11 @@ import org.ktorm.schema.varchar
 import org.ktorm.dsl.from
 import org.ktorm.dsl.select
 import com.utahfoodbank.model.Client
+import org.ktorm.dsl.delete
+import org.ktorm.dsl.eq
 import org.ktorm.dsl.insert
 import org.ktorm.dsl.map
+import org.ktorm.dsl.update
 
 // make one kotlin object representing SQLite
 // then table<nothing> = table who's actual name is clients
@@ -21,6 +24,7 @@ object Clients : Table<Nothing>("clients") {
     val clientCity = varchar("client_city")
     val clientZipCode = varchar("client_zip_code")
 }
+
 
 // SELECT * FROM Clients
 // : List<Client> return a list of clients
@@ -46,5 +50,25 @@ fun addClient(client: Client) {
         set(Clients.clientAddress, client.clientAddress)
         set(Clients.clientCity, client.clientCity)
         set(Clients.clientZipCode, client.clientZipCode)
+    }
+}
+
+fun deleteClient(clientId: Int) {
+    database.delete(Clients) {
+        it.id eq clientId
+    }
+}
+
+// update
+fun updateClient(clientId: Int, client: Client) {
+    database.update(Clients) {
+        set(Clients.clientName, client.clientName)
+        set(Clients.clientAddress, client.clientAddress)
+        set(Clients.clientCity, client.clientCity)
+        set(Clients.clientZipCode, client.clientZipCode)
+
+        where {
+            it.id eq clientId
+        }
     }
 }

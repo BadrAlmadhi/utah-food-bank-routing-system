@@ -1,9 +1,11 @@
 ktor:
   deployment:
     port: 8080
+
   application:
     modules:
       - com.utahfoodbank.SerializationKt.configureSerialization
-      - com.utahfoodbank.RoutingKt.configureRouting
       - com.utahfoodbank.CorsKt.configureCors
-
+      - com.utahfoodbank.routes.ClientRoutesKt.configureRouting
+      - com.utahfoodbank.routes.DispatcherRoutesKt.configureDispatcherRoutes
+      - com.utahfoodbank.routes.DriverRouteKt.configureDriverRoute
