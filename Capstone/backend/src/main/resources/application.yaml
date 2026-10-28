@@ -1,7 +1,7 @@
 ktor:
   deployment:
     port: 8080
-
+# configured for server to use routes
   application:
     modules:
       - com.utahfoodbank.SerializationKt.configureSerialization
@@ -9,3 +9,5 @@ ktor:
       - com.utahfoodbank.routes.ClientRoutesKt.configureRouting
       - com.utahfoodbank.routes.DispatcherRoutesKt.configureDispatcherRoutes
       - com.utahfoodbank.routes.DriverRouteKt.configureDriverRoute
+      - com.utahfoodbank.routes.RouteRoutesKt.configureRoutes
+      - com.utahfoodbank.routes.DeliveryRoutesKt.configureDeliveryRoutes

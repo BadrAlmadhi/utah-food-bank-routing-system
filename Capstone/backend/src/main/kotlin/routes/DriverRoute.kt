@@ -33,22 +33,33 @@ fun Application.configureDriverRoute() {
             val driverId = call.parameters["driverId"]?.toIntOrNull()
 
             if (driverId == null) {
-                call.respond(HttpStatusCode.BadRequest, "Driver Not Found")
-            } else {
-                deleteDriver(driverId)
+                call.respond(HttpStatusCode.BadRequest, "Invalid driver ID")
+                return@delete
+            }
+
+            // delete from database
+            val deletedRow = deleteDriver(driverId)
+
+            if (deletedRow > 0) {
                 call.respond(HttpStatusCode.NoContent)
+            } else {
+                call.respond(HttpStatusCode.NotFound, "Driver not found")
             }
         }
 
         put("/drivers/{driverId}"){
             val driverId = call.parameters["driverId"]?.toIntOrNull()
             if (driverId == null) {
-                call.respond(HttpStatusCode.BadRequest, "Driver Not Found")
-            } else {
+                call.respond(HttpStatusCode.BadRequest, "Invalid driver ID")
+                return@put
+            }
 
-                val driver = call.receive<Driver>()
-                updateDriver(driverId, driver)
+            val driver = call.receive<Driver>()
+            val updatedRow = updateDriver(driverId, driver)
+            if (updatedRow > 0) {
                 call.respond(HttpStatusCode.NoContent)
+            } else {
+                call.respond(HttpStatusCode.NotFound, "Driver not found")
             }
         }
     }

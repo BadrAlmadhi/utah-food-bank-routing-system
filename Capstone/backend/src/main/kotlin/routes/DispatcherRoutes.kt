@@ -34,9 +34,18 @@ fun Application.configureDispatcherRoutes() {
             val dispatcherId = call.parameters["dispatcherId"]?.toIntOrNull()
 
             if (dispatcherId == null) {
-                call.respond(HttpStatusCode.BadRequest, "Dispatcher Not Found")
+                call.respond(HttpStatusCode.BadRequest, "Invalid dispatcher ID")
+                return@delete
+            }
+
+            // delete dispatcher from database
+            val deletedRow = deleteDispatcher(dispatcherId)
+
+            // check weather a dispatcher was deleted
+            if (deletedRow > 0) {
+                call.respond(HttpStatusCode.NoContent)
             } else {
-                deleteDispatcher(dispatcherId)
+                call.respond(HttpStatusCode.NotFound, "Dispatcher not found")
             }
         }
 
@@ -44,10 +53,21 @@ fun Application.configureDispatcherRoutes() {
         put("/dispatchers/{dispatcherId}") {
             val dispatcherId = call.parameters["dispatcherId"]?.toIntOrNull()
             if (dispatcherId == null) {
-                call.respond(HttpStatusCode.BadRequest, "Dispatcher Not Found")
+                call.respond(HttpStatusCode.BadRequest, "Invalid dispatcher ID")
+                return@put
+            }
+
+            // receive updated dispatcher information from react
+            val dispatcher = call.receive<Dispatcher>()
+
+            // update dispatcher in database
+            val updatedRow = updateDispatcher(dispatcherId, dispatcher)
+
+            // check weather the update succeeded
+            if (updatedRow > 0) {
+                call.respond(HttpStatusCode.NoContent)
             } else {
-                val dispatcher = call.receive<Dispatcher>()
-                updateDispatcher(dispatcherId, dispatcher)
+                call.respond(HttpStatusCode.NotFound, "Dispatcher not found")
             }
         }
     }

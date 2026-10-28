@@ -53,15 +53,15 @@ fun addClient(client: Client) {
     }
 }
 
-fun deleteClient(clientId: Int) {
-    database.delete(Clients) {
+fun deleteClient(clientId: Int): Int{
+   return database.delete(Clients) {
         it.id eq clientId
     }
 }
 
 // update
-fun updateClient(clientId: Int, client: Client) {
-    database.update(Clients) {
+fun updateClient(clientId: Int, client: Client): Int {
+    return database.update(Clients) {
         set(Clients.clientName, client.clientName)
         set(Clients.clientAddress, client.clientAddress)
         set(Clients.clientCity, client.clientCity)

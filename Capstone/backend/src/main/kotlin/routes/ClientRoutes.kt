@@ -44,9 +44,15 @@ fun Application.configureRouting() {
             val clientId = call.parameters["clientId"]?.toIntOrNull()
 
             if (clientId == null) {
-                call.respond(HttpStatusCode.BadRequest, "User Not Found")
+                call.respond(HttpStatusCode.BadRequest, "Invalid client ID")
+                return@delete
+            }
+
+            val deletedRows = deleteClient(clientId)
+            if (deletedRows > 0 ){
+                call.respond(HttpStatusCode.NoContent)
             } else {
-                deleteClient(clientId)
+                call.respond(HttpStatusCode.NotFound, "Client not found")
             }
 
         }
@@ -56,13 +62,24 @@ fun Application.configureRouting() {
             val clientId = call.parameters["clientId"]?.toIntOrNull()
 
             if (clientId == null) {
-                call.respond(HttpStatusCode.BadRequest, "User id not found")
+                call.respond(HttpStatusCode.BadRequest, "Invalid client ID")
+                return@put
+            }
+
+            val client = call.receive<Client>()
+            val updatedRows = updateClient(clientId, client)
+            if (updatedRows > 0 ){
+                call.respond(HttpStatusCode.NoContent)
             } else {
-                // client object
-                val client = call.receive<Client>()
-                updateClient(clientId, client)
+                call.respond(HttpStatusCode.NotFound, "Client not found")
             }
         }
 
     }
 }
+
+// here we are managing HTTP requests 200 = ok
+// 201 = created
+// 204 No content
+// 404 = Not found
+// 400 = bad request

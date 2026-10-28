@@ -38,9 +38,8 @@ fun getDispatcher() : List<Dispatcher> {
 }
 
 // Insert
-fun addDispatcher(dispatcher: Dispatcher){
+fun addDispatcher(dispatcher: Dispatcher) {
     database.insert(Dispatchers) {
-        set(Dispatchers.id, dispatcher.dispatcherId)
         set(Dispatchers.dispatcherName, dispatcher.dispatcherName)
         set(Dispatchers.dispatcherEmail, dispatcher.dispatcherEmail)
         set(Dispatchers.dispatcherPhoneNumber, dispatcher.dispatcherPhoneNumber)
@@ -48,15 +47,15 @@ fun addDispatcher(dispatcher: Dispatcher){
 }
 
 // delete
-fun deleteDispatcher(dispatcherId: Int){
-    database.delete(Dispatchers) {
+fun deleteDispatcher(dispatcherId: Int): Int{
+   return database.delete(Dispatchers) {
         it.id eq dispatcherId
     }
 }
 
 // update
-fun updateDispatcher(dispatcherId: Int, dispatcher: Dispatcher){
-    database.update(Dispatchers) {
+fun updateDispatcher(dispatcherId: Int, dispatcher: Dispatcher): Int{
+    return database.update(Dispatchers) {
         set(Dispatchers.dispatcherName, dispatcher.dispatcherName)
         set(Dispatchers.dispatcherEmail, dispatcher.dispatcherEmail)
         set(Dispatchers.dispatcherPhoneNumber, dispatcher.dispatcherPhoneNumber)

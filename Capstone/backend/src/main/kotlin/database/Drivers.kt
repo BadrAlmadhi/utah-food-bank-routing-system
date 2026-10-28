@@ -42,9 +42,9 @@ fun getDrivers(): List<Driver> {
 
 
 // Insert
+// no Id SQLite generate id automatically
 fun addDriver(driver: Driver) {
     database.insert(Drivers) {
-        set(Drivers.id, driver.driverId)
         set(Drivers.driverName, driver.driverName)
         set(Drivers.driverEmail, driver.driverEmail)
         set(Drivers.driverPhoneNumber, driver.driverPhoneNumber)
@@ -53,20 +53,21 @@ fun addDriver(driver: Driver) {
 }
 
 // delete
-fun deleteDriver(driverId: Int) {
-    database.delete(Drivers) {
+fun deleteDriver(driverId: Int): Int {
+   return database.delete(Drivers) {
         it.id eq driverId
     }
 }
 
 // update
-fun updateDriver(driverId: Int, driver: Driver) {
-    database.update(Drivers) {
+fun updateDriver(driverId: Int, driver: Driver): Int {
+  return  database.update(Drivers) {
         set(Drivers.driverName, driver.driverName)
         set(Drivers.driverEmail, driver.driverEmail)
         set(Drivers.driverPhoneNumber, driver.driverPhoneNumber)
         set(Drivers.vanNumber, driver.vanNumber)
 
+      // only update matched id
         where {
             it.id eq driverId
         }
