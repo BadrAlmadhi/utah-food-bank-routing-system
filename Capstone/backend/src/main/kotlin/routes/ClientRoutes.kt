@@ -10,6 +10,10 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.request.*
 import com.utahfoodbank.model.Client
+import com.utahfoodbank.database.updateClientCoordinates
+import com.utahfoodbank.services.GeocodingService
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 
 fun Application.configureRouting() {
@@ -25,17 +29,114 @@ fun Application.configureRouting() {
          call.respond(getClients())
         }
 
-        // add
+        // POST: Add a new client to the database
         post("/clients") {
-            // kotlin objects
-            // react send new client to this
-            // then we add it to the client list
+
+            // Receive client information sent from React as JSON
             val client = call.receive<Client>()
 
-            // then add client
+            // Save the new client into SQLite
             addClient(client)
-            call.respond(HttpStatusCode.Created)
+
+            // Return HTTP 201 to confirm the client was created
+            call.respond(
+                HttpStatusCode.Created,
+                "Client added successfully"
+            )
         }
+
+        // add
+        // POST: Convert a client's address into coordinates
+        // Example: POST /clients/1/geocode
+        post("/clients/{clientId}/geocode") {
+
+            // Read the client ID from the URL
+            val clientId = call.parameters["clientId"]?.toIntOrNull()
+
+            if (clientId == null) {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    "Invalid client ID"
+                )
+                return@post
+            }
+
+            // Find the client in our SQLite database
+            val client = getClients().find {
+                it.clientId == clientId
+            }
+
+            if (client == null) {
+                call.respond(
+                    HttpStatusCode.NotFound,
+                    "Client not found"
+                )
+                return@post
+            }
+
+            // Build the complete address
+            val fullAddress = listOf(
+                client.clientAddress,
+                client.clientCity,
+                "UT",
+                client.clientZipCode
+            ).joinToString(", ")
+
+            try {
+                // Call the Census API outside the Ktor event-loop thread.
+                // This service uses Java's blocking HTTP client.
+                val coordinates = withContext(Dispatchers.IO) {
+                    GeocodingService.geocode(fullAddress)
+                }
+
+                // No matching geographic location was found
+                if (coordinates == null) {
+                    call.respond(
+                        HttpStatusCode.UnprocessableEntity,
+                        "No matching address found"
+                    )
+                    return@post
+                }
+
+                // Save latitude and longitude to SQLite
+                val updated = updateClientCoordinates(
+                    clientId = clientId,
+                    latitude = coordinates.latitude,
+                    longitude = coordinates.longitude
+                )
+
+                if (updated == 0) {
+                    call.respond(
+                        HttpStatusCode.NotFound,
+                        "Client no longer exists"
+                    )
+                    return@post
+                }
+
+                // Return the saved coordinates
+                call.respond(
+                    HttpStatusCode.OK,
+                    mapOf(
+                        "clientId" to clientId.toString(),
+                        "latitude" to coordinates.latitude.toString(),
+                        "longitude" to coordinates.longitude.toString()
+                    )
+                )
+
+            } catch (e: Exception) {
+                // Log the technical error on the server
+                call.application.environment.log.error(
+                    "Geocoding failed for client ID $clientId",
+                    e
+                )
+
+                call.respond(
+                    HttpStatusCode.BadGateway,
+                    "Geocoding service unavailable or failed"
+                )
+            }
+        }
+
 
         // delete
         delete("/clients/{clientId}") {
@@ -74,7 +175,6 @@ fun Application.configureRouting() {
                 call.respond(HttpStatusCode.NotFound, "Client not found")
             }
         }
-
     }
 }
 

@@ -83,3 +83,81 @@ fun updateDelivery(deliveryId: Int , delivery: Delivery): Int {
         }
     }
 }
+
+
+// Reorder the delivery stops for a specific route.
+//
+// orderedDeliveryIds contains delivery IDs in the
+// desired order, not client IDs or stop numbers.
+fun reorderDeliveries(
+    routeId: Int,
+    orderedDeliveryIds: List<Int>
+) {
+
+    // Run all changes inside one database transaction.
+    // If anything fails, Ktorm rolls back the changes.
+    database.useTransaction {
+
+        // Retrieve the deliveries belonging to this route
+        val existingDeliveries = getDeliveriesByRoute(routeId)
+
+        // Verify the request includes every delivery exactly once
+        val existingIds = existingDeliveries.map { it.deliveryId }.toSet()
+        val requestedIds = orderedDeliveryIds.toSet()
+
+        require(
+            orderedDeliveryIds.size == existingDeliveries.size &&
+                    requestedIds.size == orderedDeliveryIds.size &&
+                    requestedIds == existingIds
+        ) {
+            "The reordered list must contain every delivery exactly once"
+        }
+
+        // Our existing application uses positive stop numbers.
+        // Ensure negative values are available for temporary use.
+        require(existingDeliveries.all { it.stopOrder > 0 }) {
+            "Existing stop numbers must be positive"
+        }
+
+        // PHASE 1:
+        // Move every stop to a temporary negative number.
+        //
+        // Example: 1, 2, 3 becomes -1, -2, -3.
+        // This avoids conflicts with existing positive stop orders.
+        existingDeliveries.forEachIndexed { index, delivery ->
+
+            val updatedRows = database.update(Deliveries) {
+
+                set(Deliveries.stopOrder, -(index + 1))
+
+                where {
+                    it.id eq delivery.deliveryId
+                }
+            }
+
+            check(updatedRows == 1) {
+                "Failed to temporarily reorder delivery"
+            }
+        }
+
+        // PHASE 2:
+        // Assign the final positive stop numbers using
+        // the optimized sequence from RouteOptimizer.
+        orderedDeliveryIds.forEachIndexed { index, deliveryId ->
+
+            val updatedRows = database.update(Deliveries) {
+
+                // Stop numbers begin at 1
+                set(Deliveries.stopOrder, index + 1)
+
+                where {
+                    it.id eq deliveryId
+                }
+            }
+
+            check(updatedRows == 1) {
+                "Failed to assign final stop order"
+            }
+        }
+    }
+}
